@@ -1,5 +1,0 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-body { @apply bg-slate-50 text-slate-800 antialiased; overflow-x: hidden; }
-*:focus-visible { @apply outline-2 outline-offset-2 outline-blue-600; }
