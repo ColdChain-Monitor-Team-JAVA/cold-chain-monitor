@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title th:text="${title} + ' - ColdChain Monitor'">ColdChain Monitor</title>
+<link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<aside class="side" th:fragment="sidebar(active)">
+  <div class="brand">ColdChain Monitor</div>
+  <nav>
+    <a th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'on'">Dashboard</a>
+    <a th:href="@{/shipments}" th:classappend="${active == 'shipments'} ? 'on'">Shipments</a>
+    <a sec:authorize="hasAnyRole('ADMIN','WAREHOUSE_MANAGER','SUPPLIER','QUALITY_INSPECTOR')" th:href="@{/inventory}" th:classappend="${active == 'inventory'} ? 'on'">Inventory</a>
+    <a th:href="@{/alerts}" th:classappend="${active == 'alerts'} ? 'on'">Alerts</a>
+    <a sec:authorize="hasAnyRole('ADMIN','WAREHOUSE_MANAGER','TRANSPORT_MANAGER','QUALITY_INSPECTOR')" th:href="@{/reports}" th:classappend="${active == 'reports'} ? 'on'">Reports</a>
+    <a sec:authorize="hasRole('ADMIN')" th:href="@{/users}" th:classappend="${active == 'users'} ? 'on'">Users</a>
+  </nav>
+  <div class="who"><span th:text="${meName}">User</span><small th:text="${meRole}">Role</small>
+    <form th:action="@{/logout}" method="post"><button type="submit">Sign out</button></form></div>
+</aside>
+<div th:fragment="flash">
+  <p class="ok" th:if="${msg}" th:text="${msg}"></p>
+  <p class="err" th:if="${err}" th:text="${err}"></p>
+</div>
+</body>
+</html>

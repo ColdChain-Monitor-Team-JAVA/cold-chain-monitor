@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Sign in')}"></head>
+<body>
+<div class="auth">
+  <h1>ColdChain Monitor</h1>
+  <p>Sign in with your email and password.</p>
+  <p class="err" th:if="${param.error}">Sign-in failed. Check your email and password, or contact an administrator.</p>
+  <p class="ok" th:if="${param.logout}">You have been signed out.</p>
+  <p class="err" th:if="${param.roleMismatch}">Selected role does not match this account.</p>
+  <p class="err" th:if="${param.disabled}">Your account is currently disabled. Please contact an administrator.</p>
+  <p class="err" th:if="${param.mfaFailed}">Verification failed or expired. Please sign in again.</p>
+  <form th:action="@{/login}" method="post">
+    <label for="username">Email</label><input id="username" name="username" type="email" required autocomplete="username">
+    <label for="password">Password</label><input id="password" name="password" type="password" required autocomplete="current-password">
+    <label for="role">Role</label><select id="role" name="role" required style="width:100%;padding:7px"><option value="">Select your role</option>
+      <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.label()}"></option></select>
+    <button type="submit">Sign in</button>
+  </form>
+  <p class="note">Local development demo accounts: see README (e.g. admin@coldchain.local). Not production credentials.</p>
+</div>
+</body>
+</html>

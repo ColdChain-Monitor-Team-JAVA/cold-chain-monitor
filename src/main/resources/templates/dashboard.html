@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Dashboard')}"></head>
+<body><div class="app">
+<aside th:replace="~{fragments :: sidebar('dashboard')}"></aside>
+<main th:classappend="'dash-' + ${slug}">
+  <h1 th:text="${title}"></h1>
+  <p th:text="${tip}"></p>
+  <p class="note">Temperature, humidity and GPS values are simulated by software. No physical hardware is connected.</p>
+  <p><a class="btn" th:each="a : ${actions}" th:href="@{${a[1]}}" th:text="${a[0]}" style="margin-right:8px"></a></p>
+  <div class="cards"><div class="card" th:each="c : ${cards}" th:classappend="${c[2] == 'crit'} ? 'crit'"><span th:text="${c[0]}"></span><b th:text="${c[1]}"></b></div></div>
+  <div th:each="g : ${grids}">
+    <h2 th:text="${g.title}"></h2>
+    <div class="wrap"><table><tr><th th:each="h : ${g.headers}" th:text="${h}"></th></tr>
+      <tr th:each="r : ${g.rows}"><td th:each="c : ${r}" th:text="${c}"></td></tr>
+      <tr th:if="${g.rows.isEmpty()}"><td th:attr="colspan=${g.headers.size()}">Nothing to show.</td></tr></table></div>
+  </div>
+</main></div></body></html>

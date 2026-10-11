@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Shipment')}"></head>
+<body><div class="app">
+<aside th:replace="~{fragments :: sidebar('shipments')}"></aside>
+<main>
+  <h1 th:text="'Shipment ' + ${sh.tracking_no}"></h1>
+  <div th:replace="~{fragments :: flash}"></div>
+  <p><span class="badge" th:classappend="${sh.status}" th:text="${sh.status}"></span>
+     <span th:text="${sh.product} + ' (' + ${sh.code} + '), qty ' + ${sh.quantity} + ', ' + ${sh.origin} + ' to ' + ${sh.destination} + ', driver: ' + ${sh.driver}"></span></p>
+  <p>Permitted range: <b th:text="${sh.min_temp} + ' to ' + ${sh.max_temp} + ' °C'"></b>, humidity <b th:text="${sh.min_humidity} + ' to ' + ${sh.max_humidity} + ' %'"></b></p>
+  <form class="inline" th:if="${canUpdate and !next.isEmpty()}" th:action="@{/shipments/{id}/status(id=${sh.id})}" method="post">
+    <select name="to" aria-label="New status"><option th:each="n : ${next}" th:value="${n}" th:text="${n}"></option></select>
+    <input name="note" maxlength="200" placeholder="Note (optional)" aria-label="Note"><button type="submit">Update status</button>
+  </form>
+  <p>Expected delivery: <b th:text="${#dates.format(sh.expected_delivery,'dd MMM yyyy HH:mm')}"></b>
+    <span th:if="${sh.batch_no}" th:text="' | Batch ' + ${sh.batch_no}"></span><span th:if="${sh.instructions}" th:text="' | Instructions: ' + ${sh.instructions}"></span></p>
+  <p th:if="${sh.status == 'DELIVERED'}">Delivered <span th:text="${#dates.format(sh.delivered_at,'dd MMM yyyy HH:mm')}"></span>: received
+    <b th:text="${sh.received_qty} + ' of ' + ${sh.quantity}"></b><span class="badge CRITICAL" th:if="${sh.discrepancy}"> DISCREPANCY</span>
+    <span th:if="${sh.delivery_note}" th:text="' | Note: ' + ${sh.delivery_note}"></span></p>
+  <form class="inline" th:if="${canDeliver}" th:action="@{/shipments/{id}/deliver(id=${sh.id})}" method="post">
+    <label>Received quantity <input name="received" type="number" min="0" th:max="${sh.quantity}" th:value="${sh.quantity}" required></label>
+    <input name="note" maxlength="500" placeholder="Delivery note" aria-label="Delivery note"><button type="submit">Confirm delivery</button></form>
+  <details th:if="${canCancel}"><summary>Cancel shipment</summary>
+    <form th:action="@{/shipments/{id}/status(id=${sh.id})}" method="post"><input type="hidden" name="to" value="CANCELLED"><input name="note" maxlength="200" placeholder="Reason">
+    <button type="submit">Confirm cancellation (releases reserved stock)</button></form></details>
+  <form class="inline" th:if="${canAssign}" th:action="@{/shipments/{id}/assign(id=${sh.id})}" method="post">
+    <select name="driverId" aria-label="Driver"><option value="">No driver</option><option th:each="u : ${drivers}" th:value="${u.id}" th:text="${u.name}" th:selected="${u.id == sh.driver_id}"></option></select>
+    <select name="transportManagerId" aria-label="Transport manager"><option value="">No transport manager</option><option th:each="u : ${tms}" th:value="${u.id}" th:text="${u.name}" th:selected="${u.id == sh.transport_manager_id}"></option></select>
+    <button type="submit">Update assignment</button></form>
+  <p class="note">Readings and GPS positions are simulated by software; no hardware is connected.</p>
+  <div th:if="${latest != null}"><p>Last simulated position: <b th:text="${#numbers.formatDecimal(latest.latitude,1,4)} + ', ' + ${#numbers.formatDecimal(latest.longitude,1,4)}"></b>
+    at <span th:text="${#dates.format(latest.recorded_at,'dd MMM HH:mm:ss')}"></span></p></div>
+  <div th:if="${tStats != null}"><p>Temperature (last 60): min <b th:text="${#numbers.formatDecimal(tStats.min,1,1)}"></b>, max <b th:text="${#numbers.formatDecimal(tStats.max,1,1)}"></b>,
+    avg <b th:text="${#numbers.formatDecimal(tStats.average,1,1)}"></b> °C | Humidity: min <b th:text="${#numbers.formatDecimal(hStats.min,1,1)}"></b>,
+    max <b th:text="${#numbers.formatDecimal(hStats.max,1,1)}"></b>, avg <b th:text="${#numbers.formatDecimal(hStats.average,1,1)}"></b> %</p></div>
+  <h2>Temperature (green band = permitted range)</h2>
+  <svg th:if="${tempChart != null}" class="chart" viewBox="0 0 600 160" role="img" aria-label="Temperature chart"><rect class="band" x="0" width="600" th:attr="y=${tempChart.bandY},height=${tempChart.bandH}"/><polyline fill="none" stroke="#1d4ed8" stroke-width="2" th:attr="points=${tempChart.points}"/></svg>
+  <p th:if="${tempChart == null}">Not enough readings yet.</p>
+  <h2>Humidity</h2>
+  <svg th:if="${humChart != null}" class="chart" viewBox="0 0 600 160" role="img" aria-label="Humidity chart"><rect class="band" x="0" width="600" th:attr="y=${humChart.bandY},height=${humChart.bandH}"/><polyline fill="none" stroke="#0e7490" stroke-width="2" th:attr="points=${humChart.points}"/></svg>
+  <h2>Latest readings</h2>
+  <div class="wrap"><table><tr><th>Sensor</th><th>Temp °C</th><th>Humidity %</th><th>Time</th></tr>
+    <tr th:each="r : ${readings}"><td th:text="${r.sensor_id}"></td><td th:text="${#numbers.formatDecimal(r.temperature,1,1)}"></td>
+      <td th:text="${#numbers.formatDecimal(r.humidity,1,1)}"></td><td th:text="${#dates.format(r.recorded_at,'dd MMM HH:mm:ss')}"></td></tr>
+    <tr th:if="${readings.isEmpty()}"><td colspan="4">No readings (only in-transit shipments are simulated).</td></tr></table></div>
+  <h2>Alerts</h2>
+  <div class="wrap"><table><tr><th>Type</th><th>Severity</th><th>Status</th><th>Message</th><th>Time</th></tr>
+    <tr th:each="a : ${alerts}"><td th:text="${a.type}"></td><td><span class="badge" th:classappend="${a.severity}" th:text="${a.severity}"></span></td>
+      <td th:text="${a.status}"></td><td th:text="${a.message}"></td><td th:text="${#dates.format(a.created_at,'dd MMM HH:mm')}"></td></tr>
+    <tr th:if="${alerts.isEmpty()}"><td colspan="5">No alerts.</td></tr></table></div>
+  <h2>Status history</h2>
+  <div class="wrap"><table><tr><th>From</th><th>To</th><th>By</th><th>Note</th><th>Time</th></tr>
+    <tr th:each="h : ${history}"><td th:text="${h.from_status}"></td><td th:text="${h.to_status}"></td><td th:text="${h.changed_by_name}"></td>
+      <td th:text="${h.note}"></td><td th:text="${#dates.format(h.changed_at,'dd MMM HH:mm')}"></td></tr>
+    <tr th:if="${history.isEmpty()}"><td colspan="5">No status changes recorded.</td></tr></table></div>
+  <p><a th:href="@{/shipments}">Back to shipments</a></p>
+</main></div></body></html>

@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Error')}"></head>
+<body>
+<div class="auth">
+  <h1 th:if="${status == 403}">Access denied</h1>
+  <h1 th:if="${status != 403}" th:text="'Error ' + ${status}">Error</h1>
+  <p th:if="${status == 403}">Your role does not have permission to open this page.</p>
+  <p th:if="${status == 404}">This page or record does not exist, or you cannot access it.</p>
+  <p><a class="btn" th:href="@{/dashboard}">Back to my dashboard</a></p>
+</div>
+</body></html>

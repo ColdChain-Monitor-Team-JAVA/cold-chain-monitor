@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Verify')}"></head>
+<body>
+<div class="auth">
+  <h1>Verify your identity</h1>
+  <p class="note">Demonstration MFA: a configurable development code, not email or SMS verification.</p>
+  <p class="err" th:if="${error}" th:text="${error}"></p>
+  <form th:action="@{/mfa}" method="post">
+    <label for="code">Six-digit code</label>
+    <input id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autofocus autocomplete="one-time-code">
+    <button type="submit">Verify and continue</button>
+  </form>
+  <form th:action="@{/logout}" method="post"><button type="submit">Back to sign in</button></form>
+</div>
+</body>
+</html>

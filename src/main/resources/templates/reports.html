@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Reports')}"></head>
+<body><div class="app">
+<aside th:replace="~{fragments :: sidebar('reports')}"></aside>
+<main>
+  <h1>Reports</h1>
+  <form class="inline" th:action="@{/reports}" method="get">
+    <select name="type" aria-label="Report"><option th:each="t : ${types}" th:value="${t.key}" th:text="${t.value}" th:selected="${t.key == type}"></option></select>
+    <label>From <input type="date" name="from" th:value="${from}"></label><label>To <input type="date" name="to" th:value="${to}"></label>
+    <input name="q" th:value="${q}" placeholder="Search" aria-label="Search"><button type="submit">Run report</button>
+    <a class="btn" th:href="@{/reports/export.csv(type=${type},from=${from},to=${to},q=${q})}">Download CSV</a>
+  </form>
+  <h2 th:text="${title} + ' (' + ${total} + ' rows)'"></h2>
+  <div class="wrap"><table><tr><th th:each="h : ${table.headers}" th:text="${h}"></th></tr>
+    <tr th:each="r : ${table.rows}"><td th:each="c : ${r}" th:text="${c}"></td></tr>
+    <tr th:if="${table.rows.isEmpty()}"><td th:attr="colspan=${table.headers.size()}">No rows match the filters.</td></tr></table></div>
+  <p class="pager"><a th:if="${page > 0}" th:href="@{/reports(type=${type},from=${from},to=${to},q=${q},page=${page - 1})}">Previous</a>
+    Page <span th:text="${page + 1}"></span> of <span th:text="${pages}"></span>
+    <a th:if="${page + 1 < pages}" th:href="@{/reports(type=${type},from=${from},to=${to},q=${q},page=${page + 1})}">Next</a></p>
+</main></div></body></html>

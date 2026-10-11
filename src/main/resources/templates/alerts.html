@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Alerts')}"></head>
+<body><div class="app">
+<aside th:replace="~{fragments :: sidebar('alerts')}"></aside>
+<main>
+  <h1>Alerts</h1>
+  <div th:replace="~{fragments :: flash}"></div>
+  <form class="inline" th:action="@{/alerts}" method="get">
+    <select name="status" aria-label="Status"><option value="">All</option>
+      <option th:each="s : ${T(java.util.List).of('OPEN','ACKNOWLEDGED','RESOLVED')}" th:value="${s}" th:text="${s}" th:selected="${s == status}"></option></select>
+    <button type="submit">Filter</button>
+  </form>
+  <div class="wrap"><table><tr><th>Source</th><th>Type</th><th>Severity</th><th>Status</th><th>Details</th><th>Time</th><th>Actions</th></tr>
+    <tr th:each="a : ${rows}">
+      <td><a th:if="${a.shipment_id}" th:href="@{/shipments/{id}(id=${a.shipment_id})}" th:text="${a.tracking_no}"></a><span th:unless="${a.shipment_id}">Inventory</span></td>
+      <td th:text="${a.type}"></td>
+      <td><span class="badge" th:classappend="${a.severity}" th:text="${a.severity}"></span></td>
+      <td><span class="badge" th:classappend="${a.status}" th:text="${a.status}"></span></td>
+      <td><span th:text="${a.message}"></span>
+        <br><small style="white-space:pre-wrap" th:if="${a.investigation_notes}" th:text="'Investigation: ' + ${a.investigation_notes}"></small>
+        <br><small th:if="${a.resolution_note}" th:text="'Resolution: ' + ${a.resolution_note}"></small></td>
+      <td th:text="${#dates.format(a.created_at,'dd MMM HH:mm')}"></td>
+      <td>
+        <form th:if="${canAck and a.status == 'OPEN'}" th:action="@{/alerts/{id}/acknowledge(id=${a.id})}" method="post"><button type="submit">Acknowledge</button></form>
+        <form class="inline" th:if="${canResolve and a.status != 'RESOLVED'}" th:action="@{/alerts/{id}/note(id=${a.id})}" method="post">
+          <input name="note" maxlength="500" required placeholder="Investigation note" aria-label="Investigation note"><button type="submit">Add note</button></form>
+        <details th:if="${canResolve and a.status != 'RESOLVED'}"><summary>Resolve</summary>
+          <form class="inline" th:action="@{/alerts/{id}/resolve(id=${a.id})}" method="post"><input name="note" maxlength="500" required placeholder="Resolution note" aria-label="Resolution note"><button type="submit">Confirm resolve</button></form></details>
+      </td></tr>
+    <tr th:if="${rows.isEmpty()}"><td colspan="7">No alerts.</td></tr></table></div>
+</main></div></body></html>

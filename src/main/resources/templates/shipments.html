@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Shipments')}"></head>
+<body><div class="app">
+<aside th:replace="~{fragments :: sidebar('shipments')}"></aside>
+<main>
+  <h1>Shipments</h1>
+  <div th:replace="~{fragments :: flash}"></div>
+  <p th:if="${canCreate}"><a class="btn" th:href="@{/shipments/new}">New shipment</a></p>
+  <form class="inline" th:action="@{/shipments}" method="get">
+    <input name="q" th:value="${q}" placeholder="Search tracking, product, destination" aria-label="Search shipments">
+    <select name="status" aria-label="Status"><option value="">All statuses</option>
+      <option th:each="s : ${statuses}" th:value="${s}" th:text="${s}" th:selected="${s == status}"></option></select>
+    <button type="submit">Filter</button>
+  </form>
+  <div class="wrap"><table><tr><th>Tracking</th><th>Product</th><th>Qty</th><th>Route</th><th>Driver</th><th>Status</th></tr>
+    <tr th:each="r : ${rows}"><td><a th:href="@{/shipments/{id}(id=${r.id})}" th:text="${r.tracking_no}"></a></td><td th:text="${r.product}"></td>
+      <td th:text="${r.quantity}"></td><td th:text="${r.origin} + ' to ' + ${r.destination}"></td><td th:text="${r.driver}"></td>
+      <td><span class="badge" th:classappend="${r.status}" th:text="${r.status}"></span></td></tr>
+    <tr th:if="${rows.isEmpty()}"><td colspan="6">No shipments found.</td></tr></table></div>
+  <p class="pager"><a th:if="${page > 0}" th:href="@{/shipments(page=${page - 1},q=${q},status=${status})}">Previous</a>
+    Page <span th:text="${page + 1}"></span> of <span th:text="${pages}"></span>
+    <a th:if="${page + 1 < pages}" th:href="@{/shipments(page=${page + 1},q=${q},status=${status})}">Next</a></p>
+</main></div></body></html>

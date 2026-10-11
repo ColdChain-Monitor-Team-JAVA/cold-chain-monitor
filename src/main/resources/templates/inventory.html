@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Inventory')}"></head>
+<body><div class="app">
+<aside th:replace="~{fragments :: sidebar('inventory')}"></aside>
+<main>
+  <h1>Inventory</h1>
+  <div th:replace="~{fragments :: flash}"></div>
+  <form class="inline" th:action="@{/inventory}" method="get">
+    <input name="q" th:value="${q}" placeholder="Search code, product, batch" aria-label="Search inventory">
+    <select name="filter" aria-label="Filter"><option value="">All batches</option><option value="low" th:selected="${filter == 'low'}">Low stock</option><option value="expired" th:selected="${filter == 'expired'}">Expired</option></select>
+    <button type="submit">Filter</button>
+  </form>
+  <h2>Batches</h2>
+  <div class="wrap"><table><tr><th>Product</th><th>Batch</th><th>On hand</th><th>Reserved</th><th>Available</th><th>Expiry</th><th>Location</th><th>Status</th><th th:if="${canWrite}">Actions</th></tr>
+    <tr th:each="r : ${rows}"><td th:text="${r.code} + ' ' + ${r.name}"></td><td th:text="${r.batch_no}"></td>
+      <td th:text="${r.quantity_on_hand} + ' ' + ${r.unit}"></td><td th:text="${r.reserved}"></td><td th:text="${r.available}"></td>
+      <td th:text="${r.expiry_date}"></td><td th:text="${r.storage_location}"></td>
+      <td><span class="badge" th:classappend="${r.stock}" th:text="${r.stock}"></span></td>
+      <td th:if="${canWrite}">
+        <form class="inline" th:action="@{/inventory/batches/{id}/update(id=${r.id})}" method="post">
+          <input name="quantity" type="number" min="0" th:value="${r.quantity_on_hand}" aria-label="Quantity"><input name="expiry" type="date" th:value="${r.expiry_date}" aria-label="Expiry">
+          <input name="location" th:value="${r.storage_location}" aria-label="Location"><button type="submit">Save</button></form>
+        <details th:if="${canDelete}"><summary>Delete batch</summary><form th:action="@{/inventory/batches/{id}/delete(id=${r.id})}" method="post"><button type="submit">Confirm delete</button></form></details></td></tr>
+    <tr th:if="${rows.isEmpty()}"><td colspan="9">No batches found.</td></tr></table></div>
+  <p class="pager"><a th:if="${page > 0}" th:href="@{/inventory(page=${page - 1},q=${q},filter=${filter})}">Previous</a>
+    Page <span th:text="${page + 1}"></span> of <span th:text="${pages}"></span>
+    <a th:if="${page + 1 < pages}" th:href="@{/inventory(page=${page + 1},q=${q},filter=${filter})}">Next</a></p>
+  <div th:if="${canWrite}">
+    <h2>Add batch</h2>
+    <form class="inline" th:action="@{/inventory/batches}" method="post">
+      <select name="productId" required aria-label="Product"><option th:each="p : ${products}" th:value="${p.id}" th:text="${p.code} + ' ' + ${p.name}"></option></select>
+      <input name="batchNo" required maxlength="40" placeholder="Batch number" aria-label="Batch number"><input name="quantity" type="number" min="0" required placeholder="Quantity" aria-label="Quantity">
+      <input name="expiry" type="date" required aria-label="Expiry date"><input name="location" required maxlength="80" placeholder="Storage location" aria-label="Storage location">
+      <button type="submit">Add batch</button></form>
+  </div>
+  <h2>Products</h2>
+  <div class="wrap"><table><tr><th>Code</th><th>Name</th><th>Category</th><th>Temp °C</th><th>Humidity %</th><th>Reorder at</th><th>Supplier</th><th th:if="${canWrite}">Actions</th></tr>
+    <tr th:each="p : ${products}"><td th:text="${p.code}"></td><td th:text="${p.name}"></td><td th:text="${p.category}"></td>
+      <td th:text="${p.min_temp} + ' to ' + ${p.max_temp}"></td><td th:text="${p.min_humidity} + ' to ' + ${p.max_humidity}"></td><td th:text="${p.reorder_level}"></td><td th:text="${p.supplier}"></td>
+      <td th:if="${canWrite}"><details><summary>Edit</summary>
+        <form class="inline stack" th:action="@{/inventory/products/{id}/update(id=${p.id})}" method="post">
+          <input name="name" th:value="${p.name}" required aria-label="Name"><input name="category" th:value="${p.category}" required aria-label="Category">
+          <input name="description" th:value="${p.description}" aria-label="Description"><input name="unit" th:value="${p.unit}" required aria-label="Unit">
+          <input name="reorderLevel" type="number" min="0" th:value="${p.reorder_level}" aria-label="Reorder level">
+          <input name="minTemp" type="number" step="0.1" th:value="${p.min_temp}" aria-label="Min temperature"><input name="maxTemp" type="number" step="0.1" th:value="${p.max_temp}" aria-label="Max temperature">
+          <input name="minHumidity" type="number" step="0.1" th:value="${p.min_humidity}" aria-label="Min humidity"><input name="maxHumidity" type="number" step="0.1" th:value="${p.max_humidity}" aria-label="Max humidity">
+          <button type="submit">Save product</button></form></details>
+        <details th:if="${canDelete}"><summary>Delete product</summary><form th:action="@{/inventory/products/{id}/delete(id=${p.id})}" method="post"><button type="submit">Confirm delete</button></form></details></td></tr></table></div>
+  <div th:if="${canWrite}">
+    <h2>Add product</h2>
+    <form class="inline" th:action="@{/inventory/products}" method="post">
+      <input name="code" required maxlength="30" placeholder="Code" aria-label="Code"><input name="name" required maxlength="120" placeholder="Name" aria-label="Name">
+      <input name="category" required maxlength="60" placeholder="Category" aria-label="Category"><input name="description" maxlength="300" placeholder="Description" aria-label="Description">
+      <input name="unit" required maxlength="20" placeholder="Unit (e.g. vials)" aria-label="Unit"><input name="reorderLevel" type="number" min="0" value="20" aria-label="Reorder level">
+      <input name="minTemp" type="number" step="0.1" required placeholder="Min °C" aria-label="Min temperature"><input name="maxTemp" type="number" step="0.1" required placeholder="Max °C" aria-label="Max temperature">
+      <input name="minHumidity" type="number" step="0.1" required placeholder="Min %RH" aria-label="Min humidity"><input name="maxHumidity" type="number" step="0.1" required placeholder="Max %RH" aria-label="Max humidity">
+      <select th:unless="${isSupplier}" name="supplierId" aria-label="Supplier"><option value="">No supplier</option><option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option></select>
+      <button type="submit">Add product</button></form>
+  </div>
+</main></div></body></html>

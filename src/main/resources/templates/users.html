@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Users')}"></head>
+<body><div class="app">
+<aside th:replace="~{fragments :: sidebar('users')}"></aside>
+<main>
+  <h1>User management</h1>
+  <div th:replace="~{fragments :: flash}"></div>
+  <form class="inline" th:action="@{/users}" method="get"><input name="q" th:value="${q}" placeholder="Search name or email" aria-label="Search users"><button type="submit">Search</button></form>
+  <div class="wrap"><table><tr><th>Name and email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+    <tr th:each="u : ${rows}">
+      <td><form class="inline" th:action="@{/users/{id}/edit(id=${u.id})}" method="post"><input name="name" th:value="${u.name}" required aria-label="Name"><input name="email" type="email" th:value="${u.email}" required aria-label="Email"><button type="submit">Save</button></form></td>
+      <td><form class="inline" th:action="@{/users/{id}/role(id=${u.id})}" method="post">
+        <select name="role" aria-label="Role"><option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.label()}" th:selected="${r.name() == u.role}"></option></select>
+        <button type="submit">Set role</button></form></td>
+      <td th:text="${u.active} ? 'Active' : 'Inactive'"></td>
+      <td><form class="inline" th:action="@{/users/{id}/active(id=${u.id})}" method="post"><input type="hidden" name="active" th:value="${!u.active}">
+        <button type="submit" th:text="${u.active} ? 'Deactivate' : 'Activate'"></button></form>
+        <details><summary>Reset password</summary><form th:action="@{/users/{id}/reset-password(id=${u.id})}" method="post"><button type="submit">Confirm: generate temporary password</button></form></details></td></tr></table></div>
+  <h2>Add user</h2>
+  <form class="inline" th:action="@{/users}" method="post">
+    <input name="name" required maxlength="100" placeholder="Full name" aria-label="Full name">
+    <input name="email" type="email" required maxlength="150" placeholder="Email" aria-label="Email">
+    <select name="role" aria-label="Role"><option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.label()}"></option></select>
+    <input name="password" type="password" required minlength="8" placeholder="Temporary password" aria-label="Temporary password">
+    <button type="submit">Create user</button>
+  </form>
+  <h2>Recent audit events</h2>
+  <div class="wrap"><table><tr><th>Action</th><th>Detail</th><th>By</th><th>Time</th></tr>
+    <tr th:each="a : ${audit}"><td th:text="${a.action}"></td><td th:text="${a.detail}"></td><td th:text="${a.actor}"></td><td th:text="${#dates.format(a.created_at,'dd MMM HH:mm')}"></td></tr>
+    <tr th:if="${audit.isEmpty()}"><td colspan="4">No audit events yet.</td></tr></table></div>
+</main></div></body></html>

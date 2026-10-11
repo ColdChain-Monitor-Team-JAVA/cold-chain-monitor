@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('New shipment')}"></head>
+<body><div class="app">
+<aside th:replace="~{fragments :: sidebar('shipments')}"></aside>
+<main>
+  <h1>New shipment</h1>
+  <div th:replace="~{fragments :: flash}"></div>
+  <p class="note">Creating a shipment reserves the requested quantity from the selected batch. A tracking number is generated automatically.</p>
+  <form class="inline stack" th:action="@{/shipments}" method="post">
+    <label>Product batch <select name="batchId" required><option th:each="b : ${batches}" th:value="${b.id}"
+      th:text="${b.name} + ' / ' + ${b.batch_no} + ' (available ' + ${b.available} + ', expires ' + ${b.expiry_date} + ')'"></option></select></label>
+    <label>Quantity <input name="quantity" type="number" min="1" required></label>
+    <label>Origin <select name="origin" required><option th:each="h : ${hubs}" th:value="${h}" th:text="${h}"></option></select></label>
+    <label>Destination <select name="destination" required><option th:each="h : ${hubs}" th:value="${h}" th:text="${h}"></option></select></label>
+    <label>Expected delivery <input name="expected" type="datetime-local" required></label>
+    <label>Driver <select name="driverId"><option value="">Unassigned</option><option th:each="u : ${drivers}" th:value="${u.id}" th:text="${u.name}"></option></select></label>
+    <label>Transport manager <select name="transportManagerId"><option value="">Unassigned</option><option th:each="u : ${tms}" th:value="${u.id}" th:text="${u.name}"></option></select></label>
+    <label>Receiving hospital <select name="hospitalId"><option value="">None</option><option th:each="u : ${hospitals}" th:value="${u.id}" th:text="${u.name}"></option></select></label>
+    <label>Delivery instructions <input name="instructions" maxlength="300"></label>
+    <button type="submit">Create shipment</button>
+  </form>
+  <p th:if="${batches.isEmpty()}" class="err">No batches with available stock. Add inventory first.</p>
+</main></div></body></html>
